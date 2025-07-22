@@ -16,7 +16,8 @@ class GameState:
         """Add a player with their position."""
         self.players[player_name] = {
             'position': position,
-            'stack': self.starting_stack
+            'stack': self.starting_stack,
+            'contribution': 0  
         }
         self.player_count += 1
 

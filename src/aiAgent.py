@@ -55,33 +55,46 @@ class AIAgent:
             
         
         """
+        strategy = "AGRESSIVE"
         prompt = f"""
-            You are a professional No-Limit Hold'em poker player playing with {game_state.player_count} players.
-            You must make the best decision based on the current hand state and game settings.
+            You are a professional No-Limit Hold'em poker player named AlbertIntel (AI) playing against {game_state.player_count - 1} opponents.
             You have extensive knowledge of poker strategy, hand evaluation, and the rules of poker.
-            Small blind is {game_state.sb}, big blind is {game_state.bb}.
             All cards are represented as a two-character string, e.g., 'Js' for Jack of spades. 
                 (h = hearts, d = diamonds, c = clubs, s = spades)
             
-            Your hand: {hand_state.hero_hand}
-            Board: {hand_state.board if hand_state.board else 'No board yet, preflop'} 
-            You have contributed: ${hand_state.get_player_pot_contribution('Hero')} so far into the pot.
-            Current pot: ${hand_state.pot}
-            You are Hero with this position and stack: {hand_state.players.get('Hero')}
-            Everyone's positions & stacks: {hand_state.players}.
-            Action history: {hand_state.history}
-            The last action was {hand_state.history[-1]}
-            Street: {hand_state.street}
-            
-            - Use ONLY the information above. Do NOT assume suits, connections, or hand strength unless explicitly present.
-            - Only choose legal actions and bet sizes for this street and situation.
-            - For "call" or "check" or "fold", always set "raise_size" to 0.
+            GAME INFO:
+            - Small blind: ${game_state.sb}, Big blind: ${game_state.bb}
+            - Your hand: {hand_state.hero_hand}
+            - Board: {hand_state.board if hand_state.board else 'No board yet, preflop'}
+            - You have contributed: ${hand_state.get_player_pot_contribution('AI')} so far into the pot.
+            - Current pot: ${hand_state.pot}
+            - Your position and stack: {hand_state.players.get('AI')}
+            - Players (position & stack): {hand_state.players}
+            - There are {len(hand_state.active_players)} active players: {hand_state.active_players}
+            - Action history: {hand_state.history}
+                - "act" is the action taken by the player.
+                - "amt" is the total contribution after the action (not increment).
+                - "str" is the street (preflop, flop, turn, river) of the logged action.
+            - Last action: {hand_state.history[-1]}
+            - Current street: {hand_state.street}
 
-             Given the last action, full hand history, and board, respond ONLY with JSON:
-            {{"action": "...", "raise_size": 0, "reasoning": "..."}}
-            - "action" is one of {legal_actions}.
-            - "raise_size" is the total amount you want to raise to.
-            - "reasoning" is a brief explanation of your decision.
+            <strategy>{strategy}</strategy>
+
+            RULES FOR DECISION:
+            1. ONLY use the information provided — do not infer hidden cards or made hands (like top pair preflop) unless explicitly present.
+            2. "action" must be one of: {legal_actions} (EXACTLY as written, no amounts included in the action).
+            3. "raise_size" must represent the **TOTAL amount you are raising TO**, not how much more you are adding.
+                - Example: If the current highest bet is $5 and you raise to $12, `raise_size` = 12.
+            4. If you choose "call", "all in", "check", or "fold", ALWAYS set "raise_size" = 0.
+            5. Always choose a valid legal action based on the current pot and betting rules.
+            6. Briefly explain your reasoning in 2-3 sentences referencing your exact hand in english, bluff opportunities (if applicable), the history of the hand, the board, and pot odds (if applicable).
+             
+            RESPOND ONLY IN VALID JSON (no extra text):
+            {{
+                "action": "fold" | "check" | "call" | "raise" | "all in",
+                "raise_size": <integer>,
+                "reasoning": "<your explanation>"
+            }}
             """
         
         # print(f"AI Prompt: {prompt}")
